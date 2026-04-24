@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <title>Collecte - {{ maladie }}</title>
+    <style>
+        body {
+            background-image: linear-gradient(rgba(255,255,255,0.8), rgba(255,255,255,0.8)), 
+                              url('https://images.unsplash.com/photo-1505751172107-573225a96291?auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            min-height: 100vh;
+        }
+    </style>
+</head>
+<body>
+    <div class="container py-5">
+        <div class="row justify-content-center">
+            <div class="col-md-6">
+                <div class="card shadow p-4 border-0">
+                    <h2 class="text-success mb-3">Saisie : {{ maladie }}</h2>
+                    
+                    {% with messages = get_flashed_messages(with_categories=true) %}
+                      {% if messages %}
+                        {% for category, message in messages %}
+                          <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                          </div>
+                        {% endfor %}
+                      {% endif %}
+                    {% endwith %}
+
+                    <form action="/enregistrer_sante" method="POST">
+                        <input type="hidden" name="maladie" value="{{ maladie }}">
+                        
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Nom ou ID Patient</label>
+                            <input type="text" name="patient_nom" class="form-control" placeholder="Ex: Patient_001" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">Âge</label>
+                            <input type="number" name="age" class="form-control" required>
+                        </div>
+
+                        <div class="mb-3">
+                            <label class="form-label fw-bold">
+                                {% if maladie == 'Diabète' %} Taux Glycémie (g/L)
+                                {% elif maladie == 'Hypertension' %} Tension Artérielle (mmHg)
+                                {% else %} Marqueur Tumoral / Valeur Test {% endif %}
+                            </label>
+                            <input type="number" step="0.01" name="valeur_principale" class="form-control" required>
+                        </div>
+
+                        <button type="submit" class="btn btn-success w-100 py-2">Enregistrer les données</button>
+                    </form>
+                    
+                    <hr>
+                    <div class="text-center">
+                        <a href="/sante" class="text-decoration-none">⬅️ Retour au menu santé</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

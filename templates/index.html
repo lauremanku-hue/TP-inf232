@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <title>Cameroon Health Monitor</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body class="bg-light">
+    <div class="container mt-5">
+        <h2 class="text-primary">🇨🇲 Collecte de Données de Santé</h2>
+        <div class="card p-4 shadow">
+            <form action="/collecte_sante" method="POST">
+                <div class="mb-3">
+                    <label>Âge de l'étudiant/patient</label>
+                    <input type="number" name="age" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label>Taux de glycémie (g/L)</label>
+                    <input type="number" step="0.01" name="glycemie" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label>Tension Artérielle</label>
+                    <input type="number" step="0.1" name="tension" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label>IMC (Indice de Masse Corporelle)</label>
+                    <input type="number" step="0.1" name="imc" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-success w-100">Enregistrer la donnée</button>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

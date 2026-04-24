@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <title>Laure Safety & Health Monitor - Menu</title>
+    <style>
+        body {
+            background: #f4f7f6;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .hero-section {
+            background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
+                        url('https://images.unsplash.com/photo-1576091160550-2173dba999ef?auto=format&fit=crop&w=1350&q=80');
+            background-size: cover;
+            background-position: center;
+            color: white;
+            padding: 80px 0;
+            margin-bottom: 40px;
+        }
+        .menu-card {
+            border: none;
+            border-radius: 15px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            height: 100%;
+        }
+        .menu-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+        .icon-circle {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 30px;
+            margin: 0 auto 20px;
+        }
+    </style>
+</head>
+<body>
+
+    <header class="hero-section text-center">
+        <div class="container">
+            <h1 class="display-3 fw-bold">Laure Safety & Health Monitor 🇨🇲</h1>
+            <p class="lead">Système d'Analyse Statistique et Prédictive</p>
+        </div>
+    </header>
+
+    <main class="container mb-5">
+        <div class="row g-4 justify-content-center">
+            
+            <div class="col-md-4">
+                <div class="card menu-card shadow-sm p-4 text-center">
+                    <div class="icon-circle bg-primary text-white">🏥</div>
+                    <h3 class="fw-bold">Module Santé</h3>
+                    <p class="text-muted">Collecte de données sur le diabète, l'hypertension et le cancer.</p>
+                    <a href="/sante" class="btn btn-primary rounded-pill mt-auto">Ouvrir le Module</a>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card menu-card shadow-sm p-4 text-center">
+                    <div class="icon-circle bg-danger text-white">🚗</div>
+                    <h3 class="fw-bold">Sécurité Routière</h3>
+                    <p class="text-muted">Analyse des risques et des infractions sur les axes routiers.</p>
+                    <a href="/form_securite" class="btn btn-danger rounded-pill mt-auto">Signaler un Risque</a>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card menu-card shadow-sm p-4 text-center" style="border-top: 5px solid #2ecc71;">
+                    <div class="icon-circle bg-success text-white">📊</div>
+                    <h3 class="fw-bold">Observatoire</h3>
+                    <p class="text-muted">Visualisation des surfaces représentatives et prédictions.</p>
+                    <a href="/observatoire" class="btn btn-success rounded-pill mt-auto">Consulter l'Analyse</a>
+                </div>
+            </div>
+
+        </div>
+    </main>
+
+    <footer class="text-center py-4 text-muted">
+        <small>Analyse et Collecte des donnees  - {{ now.year if now else '2026' }}</small>
+    </footer>
+
+</body>
+</html>

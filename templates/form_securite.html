@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <title>Sécurité Routière - Cameroun</title>
+    <style>
+       body {
+        background-image: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6)), 
+                          url('https://images.unsplash.com/photo-1515162305285-0293e4767cc2?auto=format&fit=crop&w=1350&q=80');
+        background-size: cover;
+        color: white; /* Pour que le texte soit lisible sur le fond sombre */
+    }
+    </style>
+</head>
+<body class="bg-light">
+    
+    <div class="container mt-5">
+        <h2 class="text-danger">🚗 Signalement Risque Routier</h2>
+        <div class="card p-4 shadow">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% for category, message in messages %}
+      <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+      </div>
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+            <form action="/enregistrer_securite" method="POST">
+                <div class="mb-3">
+                    <label>Lieu (Axe routier / Quartier)</label>
+                    <input type="text" name="lieu" class="form-control" placeholder="Ex: Axe Yaoundé-Douala" required>
+                </div>
+                <div class="mb-3">
+                    <label>Vitesse observée (km/h)</label>
+                    <input type="number" name="vitesse" class="form-control" required>
+                </div>
+                <div class="mb-3">
+                    <label>Nombre d'accidents connus sur cette zone</label>
+                    <input type="number" name="accidents" class="form-control" required>
+                </div>
+                <button type="submit" class="btn btn-danger w-100">Enregistrer l'observation</button>
+            </form>
+            <br>
+            <a href="/" class="btn btn-secondary">Retour à l'accueil</a>
+        </div>
+    </div>
+</body>
+</html>
+
