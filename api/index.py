@@ -8,18 +8,18 @@ from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
 
-app = Flask(__name__)
-
-# --- CONFIGURATION VERCEL / SQLITE ---
+# --- CONFIGURATION SPÉCIFIQUE VERCEL ---
+# On définit le chemin de la base de données dans /tmp pour Vercel
 if os.environ.get('VERCEL'):
-    # Utilisation du dossier /tmp pour éviter l'erreur "Read-only file system"
-    db_path = '/tmp/test.db'
+    db_path = '/tmp/laure_collecte.db'
+    # Force Flask à ne pas essayer de créer un dossier 'instance' dans le read-only
+    app = Flask(__name__, instance_path='/tmp')
 else:
     db_path = os.path.join(os.path.abspath(os.path.dirname(__file__)), 'laure_collecte.db')
+    app = Flask(__name__)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['FLASK_SQLALCHEMY_INSTANCE_SYSTEM'] = False 
 app.secret_key = 'une_cle_secrete_inf232'
 
 db = SQLAlchemy(app)
@@ -41,7 +41,7 @@ class SecuriteRoutiere(db.Model):
     vitesse_detectee = db.Column(db.Integer)
     date = db.Column(db.DateTime, default=datetime.utcnow)
 
-# Création des tables
+# Création des tables au démarrage
 with app.app_context():
     db.create_all()
 
@@ -53,32 +53,28 @@ def calculer_regression(df, titre, label_x, label_y, couleur):
     df[label_y] = pd.to_numeric(df[label_y], errors='coerce')
     df = df.dropna(subset=[label_y])
 
-    # --- SÉCURITÉ : ANALYSE DESCRIPTIVE ---
     if "Sécurité" in titre:
         vitesse_moyenne = df[label_y].mean()
-        vitesse_max = df[label_y].max()
+        v_max = df[label_y].max()
         ecart_type = df[label_y].std()
         taux_exces = (len(df[df[label_y] > 110]) / len(df)) * 100 if len(df) > 0 else 0
         
         df_plot = df.groupby('lieu')[label_y].mean().reset_index()
         fig = px.bar(df_plot, x='lieu', y=label_y, title=titre, color_discrete_sequence=[couleur])
-
+        
         stats = {
             'type': 'descriptif',
             'moyenne': round(vitesse_moyenne, 1),
-            'max': vitesse_max,
+            'max': v_max,
             'ecart_type': round(ecart_type, 2) if not pd.isna(ecart_type) else 0,
             'taux_exces': round(taux_exces, 1),
             'total': len(df),
             'pente': round(vitesse_moyenne / 120, 2)
         }
-
-    # --- SANTÉ : MODÈLE ET ESTIMATION ---
     else:
         df[label_x] = pd.to_numeric(df[label_x], errors='coerce')
         df = df.dropna(subset=[label_x])
-
-        if len(df) < 2: return None, {"type": "erreur", "msg": "Pas assez de données"}
+        if len(df) < 2: return None, {"type": "erreur"}
 
         model = LinearRegression()
         X = df[[label_x]].values
@@ -90,9 +86,7 @@ def calculer_regression(df, titre, label_x, label_y, couleur):
 
         df['classe_age'] = (df[label_x] // 10 * 10).astype(str) + "-" + (df[label_x] // 10 * 10 + 9).astype(str)
         df_plot = df.groupby('classe_age')[label_y].mean().reset_index()
-
-        fig = px.bar(df_plot, x='classe_age', y=label_y, title=f"Répartition par âge : {titre}",
-                     color_discrete_sequence=[couleur], text_auto='.1f')
+        fig = px.bar(df_plot, x='classe_age', y=label_y, title=f"Répartition : {titre}", color_discrete_sequence=[couleur])
 
         stats = {
             'type': 'modele',
@@ -120,23 +114,18 @@ def observatoire():
     conn.close()
 
     analyses = {}
-    g_sante, i_sante = calculer_regression(df_sante, "Suivi Santé", "age", "valeur_principale", "#3366FF")
+    g_sante, i_sante = calculer_regression(df_sante, "Santé", "age", "valeur_principale", "#3366FF")
     analyses['sante'] = {'graph': g_sante, 'info': i_sante}
     
-    g_secu, i_secu = calculer_regression(df_secu, "Sécurité Routière", "lieu", "vitesse_detectee", "#22CC22")
+    g_secu, i_secu = calculer_regression(df_secu, "Sécurité", "lieu", "vitesse_detectee", "#22CC22")
     analyses['secu'] = {'graph': g_secu, 'info': i_secu}
 
-    # Calcul des stats globales pour l'affichage
-    v_moyenne = df_secu['vitesse_detectee'].mean() if not df_secu.empty else 0
+    v_moy = df_secu['vitesse_detectee'].mean() if not df_secu.empty else 0
     v_max = df_secu['vitesse_detectee'].max() if not df_secu.empty else 0
-    taux_exces = (len(df_secu[df_secu['vitesse_detectee'] > 110]) / len(df_secu)) * 100 if not df_secu.empty else 0
+    t_exces = (len(df_secu[df_secu['vitesse_detectee'] > 110]) / len(df_secu)) * 100 if not df_secu.empty else 0
 
-    return render_template('observatoire.html', 
-                           analyses=analyses, 
-                           total=len(df_sante)+len(df_secu),
-                           moyenne=round(v_moyenne, 1),
-                           vitesse_max=v_max,
-                           taux_exces=round(taux_exces, 1))
+    return render_template('observatoire.html', analyses=analyses, total=len(df_sante)+len(df_secu),
+                           moyenne=round(v_moy, 1), vitesse_max=v_max, taux_exces=round(t_exces, 1))
 
 @app.route('/form_securite')
 def page_form_securite():
@@ -148,8 +137,8 @@ def menu_sante():
 
 @app.route('/form_sante')
 def page_form_sante():
-    maladie_choisie = request.args.get('maladie', 'Général')
-    return render_template('form_sante.html', maladie=maladie_choisie)
+    maladie = request.args.get('maladie', 'Général')
+    return render_template('form_sante.html', maladie=maladie)
 
 @app.route('/enregistrer_securite', methods=['POST'])
 def enregistrer_securite():
@@ -162,7 +151,7 @@ def enregistrer_securite():
         )
         db.session.add(nouvel_enregistrement)
         db.session.commit()
-        flash(f'✅ Succès ! Infraction à {nouvel_enregistrement.lieu} enregistrée.', 'success')
+        flash(f'✅ Enregistré à {nouvel_enregistrement.lieu}', 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'❌ Erreur : {e}', 'danger')
@@ -179,7 +168,7 @@ def enregistrer_sante():
         )
         db.session.add(nouvel_enregistrement)
         db.session.commit()
-        flash(f'✅ Succès : Le cas de {nouvel_enregistrement.maladie} a été enregistré !', 'success')
+        flash(f'✅ Cas de {nouvel_enregistrement.maladie} enregistré !', 'success')
     except Exception as e:
         db.session.rollback()
         flash(f'❌ Erreur : {e}', 'danger')
