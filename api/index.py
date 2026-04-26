@@ -11,7 +11,7 @@ from sklearn.linear_model import LinearRegression
 # --- CONFIGURATION CRITIQUE POUR VERCEL ---
 app = Flask(__name__, instance_path='/tmp', instance_relative_config=True)
 # Configuration explicite pour Vercel
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/laure_data.db'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
     'pool_recycle': 299,
