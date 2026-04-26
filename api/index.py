@@ -5,26 +5,25 @@ import plotly.express as px
 import plotly.utils
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash
-from flask_sqlalchemy import SQLAlchemy
+from flask import Flask, render_template, request, redirect, url_for, flash
+from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, scoped_session
 from sklearn.linear_model import LinearRegression
 
 # --- CONFIGURATION CRITIQUE POUR VERCEL ---
-app = Flask(__name__, instance_path='/tmp', instance_relative_config=True)
-# Configuration explicite pour Vercel
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory'
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    'pool_recycle': 299,
-    'connect_args': {'timeout': 30}
-}
+app = Flask(__name__)
 app.secret_key = 'une_cle_secrete_inf232'
 
-# FORCER le chemin d'instance avant d'initialiser SQLAlchemy
-app.instance_path = '/tmp'
+# Utiliser SQLite en mémoire ou dans /tmp
+DATABASE_URL = 'sqlite:////tmp/laure_data.db'  # Chemin absolu
 
-db = SQLAlchemy()
-db.init_app(app)
+# Créer l'engine SQLAlchemy
+engine = create_engine(DATABASE_URL, connect_args={'check_same_thread': False})
 
+# Créer une session factory
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
 
 # --- MODÈLES ---
 class SanteData(db.Model):
