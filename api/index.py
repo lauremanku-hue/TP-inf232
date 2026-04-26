@@ -9,7 +9,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sklearn.linear_model import LinearRegression
 
 # --- CONFIGURATION CRITIQUE POUR VERCEL ---
-app = Flask(__name__)
+app = Flask(__name__, instance_path='/tmp', instance_relative_config=True)
 # Configuration explicite pour Vercel
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/laure_data.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -22,7 +22,8 @@ app.secret_key = 'une_cle_secrete_inf232'
 # FORCER le chemin d'instance avant d'initialiser SQLAlchemy
 app.instance_path = '/tmp'
 
-db = SQLAlchemy(app)
+db = SQLAlchemy()
+db.init_app(app)
 
 
 # --- MODÈLES ---
