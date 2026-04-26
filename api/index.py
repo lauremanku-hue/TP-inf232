@@ -6,10 +6,19 @@ from sklearn.linear_model import LinearRegression
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
+import os
 
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///laure_collecte.db'
-app.secret_key = 'une_cle_secrete_inf232' 
+
+# Cherche cette partie dans ton code et remplace-la :
+if os.environ.get('VERCEL'):
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/test.db'
+else:
+    app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///laure_collecte.db'
+app.secret_key = 'une_cle_secrete_inf232'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# Ajoute cette ligne :
+app.config['FLASK_SQLALCHEMY_INSTANCE_SYSTEM'] = False 
 db = SQLAlchemy(app)
 
 # --- MODÈLES DE DONNÉES ---
