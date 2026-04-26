@@ -6,24 +6,30 @@ import plotly.utils
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash
 from flask import Flask, render_template, request, redirect, url_for, flash
-from sqlalchemy import create_engine, Column, Integer, String, Float, DateTime
-from sqlalchemy.ext.declarative import declarative_base
-from sqlalchemy.orm import sessionmaker, scoped_session
+from flask_sqlalchemy import SQLAlchemy
 from sklearn.linear_model import LinearRegression
 
-# --- CONFIGURATION CRITIQUE POUR VERCEL ---
+# D'abord configurer le chemin d'instance avant de créer l'app
+os.environ['FLASK_INSTANCE_PATH'] = '/tmp'
+
+# Créer l'app
 app = Flask(__name__)
+
+# FORCER le chemin d'instance
+app.instance_path = '/tmp'
+
+# Configuration
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/laure_data.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_recycle': 299,
+    'connect_args': {'timeout': 30, 'check_same_thread': False}
+}
 app.secret_key = 'une_cle_secrete_inf232'
 
-# Utiliser SQLite en mémoire ou dans /tmp
-DATABASE_URL = 'sqlite:////tmp/laure_data.db'  # Chemin absolu
+# Initialiser db SANS passer l'app
+db = SQLAlchemy()
 
-# Créer l'engine SQLAlchemy
-engine = create_engine(DATABASE_URL, connect_args={'check_same_thread': False})
-
-# Créer une session factory
-SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
-Base = declarative_base()
 
 # --- MODÈLES ---
 class SanteData(db.Model):
