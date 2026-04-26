@@ -15,7 +15,7 @@ app = Flask(__name__, instance_path='/tmp')
 # On définit le chemin de la base de données
 db_path = '/tmp/laure_collecte.db'
 
-app.config['SQLALCHEMY_DATABASE_URI'] = f'sqlite:///{db_path}'
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tmp/laure_data.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'une_cle_secrete_inf232'
 
