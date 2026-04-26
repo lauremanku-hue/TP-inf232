@@ -9,26 +9,18 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from sklearn.linear_model import LinearRegression
 
-# D'abord configurer le chemin d'instance avant de créer l'app
-os.environ['FLASK_INSTANCE_PATH'] = '/tmp'
+# On désactive complètement la recherche de dossier d'instance
+app = Flask(__name__, instance_relative_config=False) 
 
-# Créer l'app
-app = Flask(__name__)
-
-# FORCER le chemin d'instance
+# On force l'instance path sur /tmp au cas où une extension le demande
 app.instance_path = '/tmp'
 
-# Configuration
+# Configuration SQLite vers le dossier temporaire
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/laure_data.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
-    'pool_recycle': 299,
-    'connect_args': {'timeout': 30, 'check_same_thread': False}
-}
 app.secret_key = 'une_cle_secrete_inf232'
 
-# Initialiser db SANS passer l'app
-db = SQLAlchemy()
+db = SQLAlchemy(app)
 
 
 # --- MODÈLES ---
