@@ -9,17 +9,21 @@ from flask_sqlalchemy import SQLAlchemy
 from sklearn.linear_model import LinearRegression
 
 # --- CONFIGURATION CRITIQUE POUR VERCEL ---
-# On dit à Flask que le dossier "instance" est dans /tmp (seul endroit scriptable)
-app = Flask(__name__, instance_path='/tmp') 
-
-# On définit le chemin de la base de données
-db_path = '/tmp/laure_collecte.db'
-
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///tmp/laure_data.db'
+app = Flask(__name__)
+# Configuration explicite pour Vercel
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/laure_data.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+    'pool_recycle': 299,
+    'connect_args': {'timeout': 30}
+}
 app.secret_key = 'une_cle_secrete_inf232'
 
+# FORCER le chemin d'instance avant d'initialiser SQLAlchemy
+app.instance_path = '/tmp'
+
 db = SQLAlchemy(app)
+
 
 # --- MODÈLES ---
 class SanteData(db.Model):
