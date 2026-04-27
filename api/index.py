@@ -5,16 +5,18 @@ import plotly.express as px
 import plotly.utils
 from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash
-from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from sklearn.linear_model import LinearRegression
 
-# On désactive complètement la recherche de dossier d'instance
-app = Flask(__name__, instance_path='/tmp', template_folder=os.path.join(base_dir, 'templates'))
-# On force l'instance path sur /tmp au cas où une extension le demande
-app.instance_path = '/tmp'
+# --- AJOUTE CES DEUX LIGNES ICI ---
+base_dir = os.path.dirname(os.path.abspath(__file__))
 
-# Configuration SQLite vers le dossier temporaire
+# On utilise base_dir qu'on vient de définir
+app = Flask(__name__, 
+            instance_path='/tmp', 
+            template_folder=os.path.join(base_dir, 'templates'))
+
+# Le reste de ta configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:////tmp/laure_data.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'une_cle_secrete_inf232'
