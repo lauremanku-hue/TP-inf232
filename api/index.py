@@ -10,7 +10,7 @@ from flask_sqlalchemy import SQLAlchemy
 from sklearn.linear_model import LinearRegression
 
 # On désactive complètement la recherche de dossier d'instance
-app = Flask(__name__, instance_path='/tmp')
+app = Flask(__name__, instance_path='/tmp', template_folder='../templates')
 # On force l'instance path sur /tmp au cas où une extension le demande
 app.instance_path = '/tmp'
 
