@@ -11,10 +11,6 @@ from sklearn.linear_model import LinearRegression
 
 # On désactive complètement la recherche de dossier d'instance
 app = Flask(__name__, instance_path='/tmp')
-@app.route('/')
-def home():
-    return "Hello Vercel!"
-
 # On force l'instance path sur /tmp au cas où une extension le demande
 app.instance_path = '/tmp'
 
