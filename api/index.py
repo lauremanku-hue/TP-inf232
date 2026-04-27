@@ -103,8 +103,8 @@ def observatoire():
 def page_sante():
     return render_template('menu_sante.html') # ou le nom exact de ton fichier
 
-@app.route('/securite')
-def page_securite():
+@app.route('/form_securite')
+def form_securite():
     return render_template('form_securite.html')
     
 @app.route('/form_sante')
