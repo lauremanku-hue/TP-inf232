@@ -175,4 +175,6 @@ def enregistrer_securite():
         flash(f'Erreur : {e}', 'danger')
     return redirect(url_for('form_securite'))
 
-
+if __name__ == "__main__":
+    app.run()
+app.debug = True
