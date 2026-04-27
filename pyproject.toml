@@ -1,2 +1,13 @@
+[project]
+name = "tp-inf232"
+version = "0.1.0"
+dependencies = [
+    "flask",
+    "flask-sqlalchemy",
+    "pandas",
+    "plotly",
+    "scikit-learn"
+]
+
 [project.scripts]
-app = "api.index:app"
+app = "index:app"
