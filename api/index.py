@@ -96,6 +96,36 @@ def observatoire():
     analyses['secu'] = {'graph': g_secu, 'info': i_secu}
 
     return render_template('observatoire.html', analyses=analyses)
+    
+@app.route('/sante')
+def page_sante():
+    return render_template('menu_sante.html') # ou le nom exact de ton fichier
+
+@app.route('/securite')
+def page_securite():
+    return render_template('form_securite.html')
+    
+@app.route('/form_sante')
+def page_form_sante():
+    maladie = request.args.get('maladie', 'Général')
+    return render_template('form_sante.html', maladie=maladie)
+    
+@app.route('/enregistrer_sante', methods=['POST'])
+def enregistrer_sante():
+    try:
+        nouvel_enregistrement = SanteData(
+            maladie=request.form.get('maladie'),
+            patient_nom=request.form.get('patient_nom'),
+            valeur_principale=float(request.form.get('valeur_principale', 0)),
+            age=int(request.form.get('age', 0))
+        )
+        db.session.add(nouvel_enregistrement)
+        db.session.commit()
+        flash(f'✅ Cas de {nouvel_enregistrement.maladie} enregistré !', 'success')
+    except Exception as e:
+        db.session.rollback()
+        flash(f'❌ Erreur : {e}', 'danger')
+    return redirect(url_for('page_form_sante', maladie=request.form.get('maladie')))   
 
 @app.route('/enregistrer_securite', methods=['POST'])
 def enregistrer_securite():
