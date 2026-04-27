@@ -85,18 +85,47 @@ def accueil():
 
 @app.route('/observatoire')
 def observatoire():
+    donnees = MaTable.query.all()
+    if not donnees:
+        flash("Aucune donnée disponible pour le moment.")
+        return redirect(url_for('observatoire'))
     # Utilisation d'un moteur de connexion pour éviter les verrous SQLite
     with db.engine.connect() as conn:
         df_sante = pd.read_sql("SELECT * FROM sante_data", conn)
         df_secu = pd.read_sql("SELECT * FROM securite_routiere", conn)
 
     analyses = {}
-    g_sante, i_sante = calculer_regression(df_sante, "Analyse Santé", "age", "valeur_principale", "#3366FF")
-    g_secu, i_secu = calculer_regression(df_secu, "Vitesse par Lieu", "lieu", "vitesse_detectee", "#22CC22")
-    
-    analyses['sante'] = {'graph': g_sante, 'info': i_sante}
-    analyses['secu'] = {'graph': g_secu, 'info': i_secu}
 
+    # --- PARTIE SANTÉ : Séparation par maladie ---
+    if not df_sante.empty:
+        # On récupère la liste des maladies uniques (ex: 'diabete', 'hypertension')
+        maladies = df_sante['nom_maladie'].unique() 
+        
+        for mal en maladies:
+            # On filtre le DataFrame pour cette maladie précise
+            df_filtre = df_sante[df_sante['nom_maladie'] == mal]
+            
+            # On calcule la régression pour cette maladie
+            graph, info = calculer_regression(
+                df_filtre, 
+                f"Analyse {mal.capitalize()}", 
+                "age", 
+                "valeur_principale", 
+                "#3366FF"
+            )
+            # IMPORTANT : La clé ici doit être 'diabete', 'hypertension', etc.
+            analyses[mal] = {'graph': graph, 'info': info}
+
+    # --- PARTIE SÉCURITÉ ---
+    if not df_secu.empty:
+        g_secu, i_secu = calculer_regression(
+            df_secu, 
+            "Vitesse par Lieu", 
+            "lieu", 
+            "vitesse_detectee", 
+            "#22CC22"
+        )
+        analyses['secu'] = {'graph': g_secu, 'info': i_secu}
     return render_template('observatoire.html', analyses=analyses)
     
 @app.route('/sante')
@@ -144,6 +173,6 @@ def enregistrer_securite():
     except Exception as e:
         db.session.rollback()
         flash(f'Erreur : {e}', 'danger')
-    return redirect(url_for('accueil'))
+    return redirect(url_for('form_securite'))
 
 
