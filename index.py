@@ -101,7 +101,7 @@ def observatoire():
         # On récupère la liste des maladies uniques (ex: 'diabete', 'hypertension')
         maladies = df_sante['nom_maladie'].unique() 
         
-        for mal en maladies:
+        for mal in maladies:
             # On filtre le DataFrame pour cette maladie précise
             df_filtre = df_sante[df_sante['nom_maladie'] == mal]
             
