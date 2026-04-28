@@ -102,10 +102,14 @@ def observatoire():
         maladies = df_sante['nom_maladie'].unique() 
         
         for mal in maladies:
-            # On filtre le DataFrame pour cette maladie précise
+            # 1. On filtre avec le nom exact (ex: "Diabète")
             df_filtre = df_sante[df_sante['nom_maladie'] == mal]
             
-            # On calcule la régression pour cette maladie
+            # 2. On nettoie le nom pour créer une clé compatible avec le HTML
+            # (Ex: "Diabète" devient "diabete")
+            cle_html = mal.lower().replace('è', 'e').replace('é', 'e').strip()
+            
+            # 3. On calcule la régression
             graph, info = calculer_regression(
                 df_filtre, 
                 f"Analyse {mal.capitalize()}", 
@@ -113,8 +117,9 @@ def observatoire():
                 "valeur_principale", 
                 "#3366FF"
             )
-            # IMPORTANT : La clé ici doit être 'diabete', 'hypertension', etc.
-            analyses[mal] = {'graph': graph, 'info': info}
+            
+            # 4. On enregistre avec la clé propre
+            analyses[cle_html] = {'graph': graph, 'info': info}
 
     # --- PARTIE SÉCURITÉ ---
     if not df_secu.empty:
