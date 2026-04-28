@@ -101,33 +101,39 @@ def observatoire():
         # On récupère la liste des maladies uniques (ex: 'diabete', 'hypertension')
         maladies = df_sante['nom_maladie'].unique() 
         
-        for mal in maladies:
-            # 1. On filtre les données pour cette maladie
-            df_filtre = df_sante[df_sante['nom_maladie'] == mal]
-            
-            # 2. SÉCURITÉ : On ne calcule la régression que s'il y a au moins 2 lignes
-            # Sinon, Scikit-Learn plante et cause l'erreur 500
-            if len(df_filtre) < 2:
-                continue # On passe à la maladie suivante sans planter
+        # Dictionnaire de correspondance entre Base de Données et HTML
+        mapping = {
+            'Diabète': 'diabete',
+            'Hypertension': 'hyper',
+            'Cancer': 'cancer',
+            'Sécurité Routière': 'secu'
+        }
 
-            # 3. Nettoyage de la clé pour le HTML (ex: "Diabète" -> "diabete")
-            cle_html = mal.lower().replace('è', 'e').replace('é', 'e').strip()
+        for mal_nom, cle_html in mapping.items():
+            # 1. On filtre les données avec le nom exact de la base
+            df_filtre = df_sante[df_sante['nom_maladie'] == mal_nom]
             
+            # 2. SÉCURITÉ : On vérifie s'il y a assez de données
+            if len(df_filtre) < 2:
+                # On crée une structure vide pour éviter que le HTML plante
+                analyses[cle_html] = {'graph': None, 'info': None}
+                continue 
+
             try:
-                # 4. Calcul du graphique
+                # 3. Calcul de la régression
                 graph, info = calculer_regression(
                     df_filtre, 
-                    f"Analyse {mal.capitalize()}", 
+                    f"Analyse {mal_nom}", 
                     "age", 
                     "valeur_principale", 
                     "#3366FF"
                 )
                 
-                # 5. On ajoute au dictionnaire
+                # 4. On enregistre avec la clé attendue par le HTML (ex: 'hyper')
                 analyses[cle_html] = {'graph': graph, 'info': info}
             except Exception as e:
-                print(f"Erreur calcul pour {mal}: {e}")
-                continue
+                print(f"Erreur calcul pour {mal_nom}: {e}")
+                analyses[cle_html] = {'graph': None, 'info': None}
 
     # --- PARTIE SÉCURITÉ ---
     if not df_secu.empty:
