@@ -85,7 +85,7 @@ def accueil():
 
 @app.route('/observatoire')
 def observatoire():
-    donnees = MaTable.query.all()
+    donnees = SanteData.query.all()
     if not donnees:
         flash("Aucune donnée disponible pour le moment.")
         return redirect(url_for('observatoire'))
