@@ -102,24 +102,32 @@ def observatoire():
         maladies = df_sante['nom_maladie'].unique() 
         
         for mal in maladies:
-            # 1. On filtre avec le nom exact (ex: "Diabète")
+            # 1. On filtre les données pour cette maladie
             df_filtre = df_sante[df_sante['nom_maladie'] == mal]
             
-            # 2. On nettoie le nom pour créer une clé compatible avec le HTML
-            # (Ex: "Diabète" devient "diabete")
+            # 2. SÉCURITÉ : On ne calcule la régression que s'il y a au moins 2 lignes
+            # Sinon, Scikit-Learn plante et cause l'erreur 500
+            if len(df_filtre) < 2:
+                continue # On passe à la maladie suivante sans planter
+
+            # 3. Nettoyage de la clé pour le HTML (ex: "Diabète" -> "diabete")
             cle_html = mal.lower().replace('è', 'e').replace('é', 'e').strip()
             
-            # 3. On calcule la régression
-            graph, info = calculer_regression(
-                df_filtre, 
-                f"Analyse {mal.capitalize()}", 
-                "age", 
-                "valeur_principale", 
-                "#3366FF"
-            )
-            
-            # 4. On enregistre avec la clé propre
-            analyses[cle_html] = {'graph': graph, 'info': info}
+            try:
+                # 4. Calcul du graphique
+                graph, info = calculer_regression(
+                    df_filtre, 
+                    f"Analyse {mal.capitalize()}", 
+                    "age", 
+                    "valeur_principale", 
+                    "#3366FF"
+                )
+                
+                # 5. On ajoute au dictionnaire
+                analyses[cle_html] = {'graph': graph, 'info': info}
+            except Exception as e:
+                print(f"Erreur calcul pour {mal}: {e}")
+                continue
 
     # --- PARTIE SÉCURITÉ ---
     if not df_secu.empty:
