@@ -85,67 +85,53 @@ def accueil():
 
 @app.route('/observatoire')
 def observatoire():
-    donnees = SanteData.query.all()
-    if not donnees:
-        flash("Aucune donnée disponible pour le moment.")
-        return redirect(url_for('observatoire'))
-    # Utilisation d'un moteur de connexion pour éviter les verrous SQLite
-    with db.engine.connect() as conn:
-        df_sante = pd.read_sql("SELECT * FROM sante_data", conn)
-        df_secu = pd.read_sql("SELECT * FROM securite_routiere", conn)
+    try:
+        with db.engine.connect() as conn:
+            df_sante = pd.read_sql("SELECT * FROM sante_data", conn)
+            df_secu = pd.read_sql("SELECT * FROM securite_routiere", conn)
 
-    analyses = {}
+        # Stats Sécurité
+        v_moyenne = df_secu['vitesse_detectee'].mean() if not df_secu.empty else 0
+        v_max = df_secu['vitesse_detectee'].max() if not df_secu.empty else 0
+        taux_exces = (len(df_secu[df_secu['vitesse_detectee'] > 100]) / len(df_secu)) * 100 if not df_secu.empty else 0
 
-    # --- PARTIE SANTÉ : Séparation par maladie ---
-    if not df_sante.empty:
-        # On récupère la liste des maladies uniques (ex: 'diabete', 'hypertension')
-        maladies = df_sante['nom_maladie'].unique() 
-        
-        # Dictionnaire de correspondance entre Base de Données et HTML
-        mapping = {
-            'Diabète': 'diabete',
-            'Hypertension': 'hyper',
-            'Cancer': 'cancer',
-            'Sécurité Routière': 'secu'
-        }
+        analyses = {}
+        # CORRECTION : Utilise le bon nom de colonne (nom_maladie ou maladie)
+        # J'ai ajouté une sécurité pour vérifier si la colonne existe
+        col_maladie = 'nom_maladie' if 'nom_maladie' in df_sante.columns else 'maladie'
 
-        for mal_nom, cle_html in mapping.items():
-            # 1. On filtre les données avec le nom exact de la base
-            df_filtre = df_sante[df_sante['nom_maladie'] == mal_nom]
+        for m_db, m_key in [('Diabète', 'diabete'), ('Hypertension', 'hyper'), ('Cancer', 'cancer')]:
+            # On filtre
+            mask = df_sante[col_maladie] == m_db if col_maladie in df_sante.columns else pd.Series([False]*len(df_sante))
+            df_filtre = df_sante[mask]
             
-            # 2. SÉCURITÉ : On vérifie s'il y a assez de données
-            if len(df_filtre) < 2:
-                # On crée une structure vide pour éviter que le HTML plante
-                analyses[cle_html] = {'graph': None, 'info': None}
-                continue 
-
-            try:
-                # 3. Calcul de la régression
-                graph, info = calculer_regression(
-                    df_filtre, 
-                    f"Analyse {mal_nom}", 
-                    "age", 
-                    "valeur_principale", 
-                    "#3366FF"
-                )
-                
-                # 4. On enregistre avec la clé attendue par le HTML (ex: 'hyper')
-                analyses[cle_html] = {'graph': graph, 'info': info}
-            except Exception as e:
-                print(f"Erreur calcul pour {mal_nom}: {e}")
-                analyses[cle_html] = {'graph': None, 'info': None}
-
-    # --- PARTIE SÉCURITÉ ---
-    if not df_secu.empty:
-        g_secu, i_secu = calculer_regression(
-            df_secu, 
-            "Vitesse par Lieu", 
-            "lieu", 
-            "vitesse_detectee", 
-            "#22CC22"
-        )
+            # SÉCURITÉ : On ne calcule que si on a au moins 2 points
+            if len(df_filtre) >= 2:
+                g, i = calculer_regression(df_filtre, m_db, "age", "valeur_principale", "#FF4444")
+            else:
+                g, i = None, None
+            
+            analyses[m_key] = {'graph': g, 'info': i}
+        
+        # Sécurité pour la régression routière
+        if len(df_secu) >= 2:
+            g_secu, i_secu = calculer_regression(df_secu, "Sécurité Routière", "lieu", "vitesse_detectee", "#22CC22")
+        else:
+            g_secu, i_secu = None, None
+            
         analyses['secu'] = {'graph': g_secu, 'info': i_secu}
-    return render_template('observatoire.html', analyses=analyses)
+
+        return render_template('observatoire.html', 
+                               analyses=analyses, 
+                               total=len(df_sante) + len(df_secu),
+                               moyenne=round(v_moyenne, 1),
+                               vitesse_max=v_max,
+                               taux_exces=round(taux_exces, 1))
+    
+    except Exception as e:
+        print(f"Erreur Observatoire : {e}")
+        # En cas de gros bug, on affiche une page vide au lieu d'une Erreur 500
+        return render_template('observatoire.html', analyses={}, total=0)
     
 @app.route('/sante')
 def page_sante():
