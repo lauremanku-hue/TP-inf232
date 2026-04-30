@@ -17,7 +17,7 @@ app = Flask(__name__,
             template_folder=os.path.join(base_dir, 'templates'))
 
 # Le reste de ta configuration
-postgresql://neondb_owner:npg_umg9DF2EzKQP@ep-summer-hat-anm1vxfk-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require
+app.config['SQLALCHEMY_DATABASE_URI'] ='postgresql://neondb_owner:npg_umg9DF2EzKQP@ep-summer-hat-anm1vxfk-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'une_cle_secrete_inf232'
 
@@ -181,7 +181,6 @@ def enregistrer_securite():
         db.session.rollback()
         flash(f'Erreur : {e}', 'danger')
     return redirect(url_for('form_securite'))
-
+app.debug = True
 if __name__ == "__main__":
     app.run()
-app.debug = True
