@@ -26,6 +26,7 @@ db = SQLAlchemy(app)
 
 # --- MODÈLES ---
 class SanteData(db.Model):
+    __tablename__ = 'sante_data' # On force le nom de la table
     id = db.Column(db.Integer, primary_key=True)
     maladie = db.Column(db.String(50))
     patient_nom = db.Column(db.String(100))
@@ -34,6 +35,7 @@ class SanteData(db.Model):
     date = db.Column(db.DateTime, default=datetime.utcnow)
 
 class SecuriteRoutiere(db.Model):
+    __tablename__ = 'securite_routiere' # On force le nom de la table
     id = db.Column(db.Integer, primary_key=True)
     lieu = db.Column(db.String(200))
     type_infraction = db.Column(db.String(100))
