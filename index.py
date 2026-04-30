@@ -8,25 +8,24 @@ from flask import Flask, render_template, request, redirect, url_for, flash
 from flask_sqlalchemy import SQLAlchemy
 from sklearn.linear_model import LinearRegression
 
-# --- AJOUTE CES DEUX LIGNES ICI ---
+# --- CONFIGURATION DES CHEMINS ---
 base_dir = os.path.dirname(os.path.abspath(__file__))
 
-# On utilise base_dir qu'on vient de définir
 app = Flask(__name__, 
             instance_path='/tmp', 
             template_folder=os.path.join(base_dir, 'templates'))
 
-# Le reste de ta configuration
-app.config['SQLALCHEMY_DATABASE_URI'] ='postgresql://neondb_owner:npg_umg9DF2EzKQP@ep-summer-hat-anm1vxfk-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require&channel_binding=require'
+# --- BASE DE DONNÉES (CORRECTION SYNTAXE) ---
+# Nettoyage de l'URL pour éviter l'erreur "invalid decimal literal"
+app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://neondb_owner:npg_umg9DF2EzKQP@ep-summer-hat-anm1vxfk-pooler.c-6.us-east-1.aws.neon.tech/neondb?sslmode=require'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.secret_key = 'une_cle_secrete_inf232'
 
 db = SQLAlchemy(app)
 
-
 # --- MODÈLES ---
 class SanteData(db.Model):
-    __tablename__ = 'sante_data' # On force le nom de la table
+    __tablename__ = 'sante_data'
     id = db.Column(db.Integer, primary_key=True)
     maladie = db.Column(db.String(50))
     patient_nom = db.Column(db.String(100))
@@ -35,7 +34,7 @@ class SanteData(db.Model):
     date = db.Column(db.DateTime, default=datetime.utcnow)
 
 class SecuriteRoutiere(db.Model):
-    __tablename__ = 'securite_routiere' # On force le nom de la table
+    __tablename__ = 'securite_routiere'
     id = db.Column(db.Integer, primary_key=True)
     lieu = db.Column(db.String(200))
     type_infraction = db.Column(db.String(100))
@@ -43,7 +42,7 @@ class SecuriteRoutiere(db.Model):
     vitesse_detectee = db.Column(db.Integer)
     date = db.Column(db.DateTime, default=datetime.utcnow)
 
-# Création des tables
+# Création des tables automatique
 with app.app_context():
     db.create_all()
 
@@ -52,7 +51,6 @@ def calculer_regression(df, titre, label_x, label_y, couleur):
     if df.empty or len(df) < 1:
         return None, None
     
-    # Sécurité Routière (Statistiques descriptives)
     if "Sécurité" in titre:
         vitesse_moyenne = df[label_y].mean()
         stats = {
@@ -63,7 +61,6 @@ def calculer_regression(df, titre, label_x, label_y, couleur):
         }
         fig = px.bar(df, x=label_x, y=label_y, title=titre, color_discrete_sequence=[couleur])
     
-    # Santé (Régression Linéaire)
     else:
         if len(df) < 2: return None, None
         model = LinearRegression()
@@ -92,22 +89,17 @@ def observatoire():
             df_sante = pd.read_sql("SELECT * FROM sante_data", conn)
             df_secu = pd.read_sql("SELECT * FROM securite_routiere", conn)
 
-        # Stats Sécurité
         v_moyenne = df_secu['vitesse_detectee'].mean() if not df_secu.empty else 0
         v_max = df_secu['vitesse_detectee'].max() if not df_secu.empty else 0
         taux_exces = (len(df_secu[df_secu['vitesse_detectee'] > 100]) / len(df_secu)) * 100 if not df_secu.empty else 0
 
         analyses = {}
-        # CORRECTION : Utilise le bon nom de colonne (nom_maladie ou maladie)
-        # J'ai ajouté une sécurité pour vérifier si la colonne existe
-        col_maladie = 'nom_maladie' if 'nom_maladie' in df_sante.columns else 'maladie'
+        col_maladie = 'maladie' # Priorité au nom défini dans le modèle
 
         for m_db, m_key in [('Diabète', 'diabete'), ('Hypertension', 'hyper'), ('Cancer', 'cancer')]:
-            # On filtre
             mask = df_sante[col_maladie] == m_db if col_maladie in df_sante.columns else pd.Series([False]*len(df_sante))
             df_filtre = df_sante[mask]
             
-            # SÉCURITÉ : On ne calcule que si on a au moins 2 points
             if len(df_filtre) >= 2:
                 g, i = calculer_regression(df_filtre, m_db, "age", "valeur_principale", "#FF4444")
             else:
@@ -115,7 +107,6 @@ def observatoire():
             
             analyses[m_key] = {'graph': g, 'info': i}
         
-        # Sécurité pour la régression routière
         if len(df_secu) >= 2:
             g_secu, i_secu = calculer_regression(df_secu, "Sécurité Routière", "lieu", "vitesse_detectee", "#22CC22")
         else:
@@ -132,12 +123,11 @@ def observatoire():
     
     except Exception as e:
         print(f"Erreur Observatoire : {e}")
-        # En cas de gros bug, on affiche une page vide au lieu d'une Erreur 500
         return render_template('observatoire.html', analyses={}, total=0)
-    
+
 @app.route('/sante')
 def page_sante():
-    return render_template('menu_sante.html') # ou le nom exact de ton fichier
+    return render_template('menu_sante.html')
 
 @app.route('/form_securite')
 def form_securite():
@@ -181,6 +171,7 @@ def enregistrer_securite():
         db.session.rollback()
         flash(f'Erreur : {e}', 'danger')
     return redirect(url_for('form_securite'))
-app.debug = True
+
+# --- LANCEMENT ---
 if __name__ == "__main__":
-    app.run()
+    app.run(debug=True)
